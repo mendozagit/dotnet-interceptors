@@ -6,7 +6,8 @@ using IInterceptor = DotnetInterceptors.Abstractions.IInterceptor;
 namespace DotnetInterceptors.DependencyInjection;
 
 /// <summary>
-/// Extension methods for integrating DotnetInterceptors with Microsoft.Extensions.DependencyInjection.
+/// Extension members for integrating DotnetInterceptors with Microsoft.Extensions.DependencyInjection.
+/// Uses C# 14 extension block syntax to extend <see cref="IServiceCollection"/>.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
@@ -15,153 +16,140 @@ public static class ServiceCollectionExtensions
     private static bool _interceptorsConfigured;
 
     /// <summary>
-    /// Adds the interceptor infrastructure to the service collection.
+    /// Extension block containing extension methods for <see cref="IServiceCollection"/>.
     /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="configure">Optional configuration action.</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddInterceptors(
-        this IServiceCollection services,
-        Action<InterceptorOptions>? configure = null)
+    extension(IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
-
-        lock (_lock)
+        /// <summary>
+        /// Adds the interceptor infrastructure to the service collection.
+        /// </summary>
+        /// <param name="configure">Optional configuration action for <see cref="InterceptorOptions"/>.</param>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddInterceptors(Action<InterceptorOptions>? configure = null)
         {
-            if (_interceptorsConfigured)
+            ArgumentNullException.ThrowIfNull(services);
+
+            lock (_lock)
             {
-                return services;
+                if (_interceptorsConfigured)
+                {
+                    return services;
+                }
+
+                _options = new InterceptorOptions();
+                configure?.Invoke(_options);
+
+                // Register the proxy factory
+                services.AddSingleton<ProxyFactory>();
+
+                _interceptorsConfigured = true;
             }
 
-            _options = new InterceptorOptions();
-            configure?.Invoke(_options);
-
-            // Register the proxy factory
-            services.AddSingleton<ProxyFactory>();
-
-            _interceptorsConfigured = true;
+            return services;
         }
 
-        return services;
-    }
+        /// <summary>
+        /// Registers an interceptor type to the DI container.
+        /// </summary>
+        /// <typeparam name="TInterceptor">The type of interceptor to register.</typeparam>
+        /// <param name="lifetime">The service lifetime (default: Transient).</param>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddInterceptor<TInterceptor>(ServiceLifetime lifetime = ServiceLifetime.Transient)
+            where TInterceptor : class, IInterceptor
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            services.Add(new ServiceDescriptor(typeof(TInterceptor), typeof(TInterceptor), lifetime));
+            return services;
+        }
 
-    /// <summary>
-    /// Registers an interceptor type to the DI container.
-    /// </summary>
-    /// <typeparam name="TInterceptor">The type of interceptor to register.</typeparam>
-    /// <param name="services">The service collection.</param>
-    /// <param name="lifetime">The service lifetime (default: Transient).</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddInterceptor<TInterceptor>(
-        this IServiceCollection services,
-        ServiceLifetime lifetime = ServiceLifetime.Transient)
-        where TInterceptor : class, IInterceptor
-    {
-        ArgumentNullException.ThrowIfNull(services);
-        services.Add(new ServiceDescriptor(typeof(TInterceptor), typeof(TInterceptor), lifetime));
-        return services;
-    }
+        /// <summary>
+        /// Registers an interceptor type with a factory to the DI container.
+        /// </summary>
+        /// <typeparam name="TInterceptor">The type of interceptor to register.</typeparam>
+        /// <param name="factory">The factory function to create the interceptor.</param>
+        /// <param name="lifetime">The service lifetime (default: Transient).</param>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddInterceptor<TInterceptor>(Func<IServiceProvider, TInterceptor> factory,
+            ServiceLifetime lifetime = ServiceLifetime.Transient)
+            where TInterceptor : class, IInterceptor
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(factory);
+            services.Add(new ServiceDescriptor(typeof(TInterceptor), factory, lifetime));
+            return services;
+        }
 
-    /// <summary>
-    /// Registers an interceptor type with a factory to the DI container.
-    /// </summary>
-    /// <typeparam name="TInterceptor">The type of interceptor to register.</typeparam>
-    /// <param name="services">The service collection.</param>
-    /// <param name="factory">The factory function to create the interceptor.</param>
-    /// <param name="lifetime">The service lifetime (default: Transient).</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddInterceptor<TInterceptor>(
-        this IServiceCollection services,
-        Func<IServiceProvider, TInterceptor> factory,
-        ServiceLifetime lifetime = ServiceLifetime.Transient)
-        where TInterceptor : class, IInterceptor
-    {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(factory);
-        services.Add(new ServiceDescriptor(typeof(TInterceptor), factory, lifetime));
-        return services;
-    }
+        /// <summary>
+        /// Registers a service with interception enabled.
+        /// </summary>
+        /// <typeparam name="TService">The service type (typically an interface).</typeparam>
+        /// <typeparam name="TImplementation">The implementation type.</typeparam>
+        /// <param name="configureInterceptors">Action to configure which interceptors to apply.</param>
+        /// <param name="lifetime">The service lifetime (default: Scoped).</param>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddIntercepted<TService, TImplementation>(Action<IInterceptorList> configureInterceptors,
+            ServiceLifetime lifetime = ServiceLifetime.Scoped)
+            where TService : class
+            where TImplementation : class, TService
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(configureInterceptors);
 
-    /// <summary>
-    /// Registers a service with interception enabled.
-    /// </summary>
-    /// <typeparam name="TService">The service type (typically an interface).</typeparam>
-    /// <typeparam name="TImplementation">The implementation type.</typeparam>
-    /// <param name="services">The service collection.</param>
-    /// <param name="configureInterceptors">Action to configure which interceptors to apply.</param>
-    /// <param name="lifetime">The service lifetime (default: Scoped).</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddIntercepted<TService, TImplementation>(
-        this IServiceCollection services,
-        Action<IInterceptorList> configureInterceptors,
-        ServiceLifetime lifetime = ServiceLifetime.Scoped)
-        where TService : class
-        where TImplementation : class, TService
-    {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configureInterceptors);
+            var interceptorList = new InterceptorList();
+            configureInterceptors(interceptorList);
 
-        var interceptorList = new InterceptorList();
-        configureInterceptors(interceptorList);
+            services.Add(new ServiceDescriptor(
+                typeof(TService),
+                sp =>
+                {
+                    var factory = sp.GetRequiredService<ProxyFactory>();
+                    var instance = ActivatorUtilities.CreateInstance<TImplementation>(sp);
+                    return factory.CreateProxy(typeof(TService), instance, interceptorList);
+                },
+                lifetime));
 
-        services.Add(new ServiceDescriptor(
-            typeof(TService),
-            sp =>
-            {
-                var factory = sp.GetRequiredService<ProxyFactory>();
-                var instance = ActivatorUtilities.CreateInstance<TImplementation>(sp);
-                return factory.CreateProxy(typeof(TService), instance, interceptorList);
-            },
-            lifetime));
+            return services;
+        }
 
-        return services;
-    }
+        /// <summary>
+        /// Builds a service provider with convention-based interception applied.
+        /// Call this instead of BuildServiceProvider() to enable automatic interceptor registration.
+        /// </summary>
+        /// <returns>The configured service provider.</returns>
+        public IServiceProvider BuildServiceProviderWithInterceptors()
+        {
+            ArgumentNullException.ThrowIfNull(services);
 
-    /// <summary>
-    /// Builds a service provider with convention-based interception applied.
-    /// Call this instead of BuildServiceProvider() to enable automatic interceptor registration.
-    /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The configured service provider.</returns>
-    public static IServiceProvider BuildServiceProviderWithInterceptors(
-        this IServiceCollection services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
+            ProcessServiceRegistrations(services);
+            return services.BuildServiceProvider();
+        }
 
-        ProcessServiceRegistrations(services);
-        return services.BuildServiceProvider();
-    }
+        /// <summary>
+        /// Builds a service provider with convention-based interception applied.
+        /// Call this instead of BuildServiceProvider() to enable automatic interceptor registration.
+        /// </summary>
+        /// <param name="options">Service provider options.</param>
+        /// <returns>The configured service provider.</returns>
+        public IServiceProvider BuildServiceProviderWithInterceptors(ServiceProviderOptions options)
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(options);
 
-    /// <summary>
-    /// Builds a service provider with convention-based interception applied.
-    /// Call this instead of BuildServiceProvider() to enable automatic interceptor registration.
-    /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="options">Service provider options.</param>
-    /// <returns>The configured service provider.</returns>
-    public static IServiceProvider BuildServiceProviderWithInterceptors(
-        this IServiceCollection services,
-        ServiceProviderOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(options);
+            ProcessServiceRegistrations(services);
+            return services.BuildServiceProvider(options);
+        }
 
-        ProcessServiceRegistrations(services);
-        return services.BuildServiceProvider(options);
-    }
-
-    /// <summary>
-    /// Processes all registered services and applies interceptors based on conventions.
-    /// Call this before building the service provider if not using BuildServiceProviderWithInterceptors.
-    /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection ApplyInterceptorConventions(
-        this IServiceCollection services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-        ProcessServiceRegistrations(services);
-        return services;
+        /// <summary>
+        /// Processes all registered services and applies interceptors based on conventions.
+        /// Call this before building the service provider if not using BuildServiceProviderWithInterceptors.
+        /// </summary>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection ApplyInterceptorConventions()
+        {
+            ArgumentNullException.ThrowIfNull(services);
+            ProcessServiceRegistrations(services);
+            return services;
+        }
     }
 
     private static void ProcessServiceRegistrations(IServiceCollection services)

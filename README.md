@@ -129,11 +129,6 @@ If you are familiar with ASP.NET Core MVC, you have likely used action filters o
 dotnet add package DotnetInterceptors
 ```
 
-### Dependencies
-
-- Castle.Core (>= 5.1.1)
-- Castle.Core.AsyncInterceptor (>= 2.1.0)
-- Microsoft.Extensions.DependencyInjection (>= 9.0.0)
 
 ## Quick Start
 

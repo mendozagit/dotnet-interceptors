@@ -1,20 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Build settings -->
     <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>13</LangVersion>
+    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+    <!-- Assembly info -->
     <RootNamespace>DotnetInterceptors</RootNamespace>
     <AssemblyName>DotnetInterceptors</AssemblyName>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    <PackageVersion>$(Version)</PackageVersion>
 
     <!-- Package metadata -->
     <PackageId>DotnetInterceptors</PackageId>
-    <Version>1.0.0</Version>
-    <Description>Modern AOP library with async-first interceptors for .NET</Description>
-    <PackageTags>AOP;Interceptors;DynamicProxy;Castle;DependencyInjection</PackageTags>
+    <Title>DotnetInterceptors</Title>
+    <Authors>Jesus Mendoza</Authors>
+    <Company>Jesus Mendoza</Company>
+    <Copyright>Jesus Mendoza © 2025</Copyright>
+    <Description>Modern AOP library with async-first interceptors for .NET built on Castle.DynamicProxy. Provides convention-based interceptor registration, marker interfaces, and seamless Microsoft.Extensions.DependencyInjection integration.</Description>
+    <Summary>Async-first AOP interceptors for .NET with Castle.DynamicProxy and DI integration</Summary>
+    <PackageTags>AOP;Interceptors;DynamicProxy;Castle;DependencyInjection;AspectOrientedProgramming;Proxy;CrossCuttingConcerns</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>logo.jpg</PackageIcon>
+    <ApplicationIcon>logo.ico</ApplicationIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/JesusMendoza/dotnet-interceptors</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/JesusMendoza/dotnet-interceptors</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="logo.jpg" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="5.1.1" />
@@ -28,9 +52,6 @@
     <Compile Remove="Castle-DynamicProxy Docs\**" />
     <None Include="abp-interceptor-code-and-docs\**" />
     <None Include="Castle-DynamicProxy Docs\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="nul" />
   </ItemGroup>
 
 </Project>
