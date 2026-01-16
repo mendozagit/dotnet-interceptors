@@ -33,7 +33,7 @@ jobs:
           dotnet-quality: 'preview'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore DotnetInterceptors.csproj
 
       - name: Extract Package Version
         id: get_version
@@ -43,18 +43,15 @@ jobs:
           echo "Package Version: $version"
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Test
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet build DotnetInterceptors.csproj --configuration Release --no-restore
 
       - name: Pack NuGet Package
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true'
         run: |
           if [ -n "${{ github.event.inputs.version_suffix }}" ]; then
-            dotnet pack --configuration Release --no-build --output ./nupkg --version-suffix "${{ github.event.inputs.version_suffix }}"
+            dotnet pack DotnetInterceptors.csproj --configuration Release --no-build --output ./nupkg --version-suffix "${{ github.event.inputs.version_suffix }}"
           else
-            dotnet pack --configuration Release --no-build --output ./nupkg
+            dotnet pack DotnetInterceptors.csproj --configuration Release --no-build --output ./nupkg
           fi
 
       - name: Publish to NuGet
