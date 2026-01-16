@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>13</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DotnetInterceptors</RootNamespace>
+    <AssemblyName>DotnetInterceptors</AssemblyName>
+
+    <!-- Package metadata -->
+    <PackageId>DotnetInterceptors</PackageId>
+    <Version>1.0.0</Version>
+    <Description>Modern AOP library with async-first interceptors for .NET</Description>
+    <PackageTags>AOP;Interceptors;DynamicProxy;Castle;DependencyInjection</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Castle.Core" Version="5.1.1" />
+    <PackageReference Include="Castle.Core.AsyncInterceptor" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  </ItemGroup>
+
+  <!-- Exclude documentation files from compilation -->
+  <ItemGroup>
+    <Compile Remove="abp-interceptor-code-and-docs\**" />
+    <Compile Remove="Castle-DynamicProxy Docs\**" />
+    <None Include="abp-interceptor-code-and-docs\**" />
+    <None Include="Castle-DynamicProxy Docs\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="nul" />
+  </ItemGroup>
+
+</Project>

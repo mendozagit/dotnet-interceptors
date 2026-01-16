@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:brainstorming)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet add package Scalar.AspNetCore)",
+      "Bash(dotnet run)",
+      "Bash(timeout:*)",
+      "Bash(taskkill:*)"
+    ]
+  }
+}
