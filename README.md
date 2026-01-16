@@ -125,10 +125,16 @@ If you are familiar with ASP.NET Core MVC, you have likely used action filters o
 
 ## Installation
 
+via .NET CLI:
+
 ```bash
 dotnet add package DotnetInterceptors
 ```
+via NuGet Package Manager:
 
+```bash
+NuGet\Install-Package DotnetInterceptors 
+```
 
 ## Quick Start
 
